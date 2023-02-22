@@ -1,16 +1,21 @@
 import logging
+import os
 
 class EmailSendLogger:
     def __init__(self, filename) -> None:
-        self.file_path = f"logs/{filename}.log"
-        self.basic_level = logging.INFO
-        self.format = '%(levelname)s: %(message)s'
+        self.file_path = os.path.join("logs", f'{filename}.log')
+        self.file_handler = logging.FileHandler(self.file_path)
+        self.console_handler = logging.StreamHandler()
+        self.format = logging.Formatter('%(levelname)s: %(message)s')
+        self.file_handler.setFormatter(self.format)
+        self.console_handler.setFormatter(self.format)
         self.logger = logging.getLogger(__name__)
 
-        logging.basicConfig(filename=f'{self.file_path}', level=self.basic_level, format=self.format)
 
     def info_message(self, msg: str):
         self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(self.file_handler)
+        self.logger.addHandler(self.console_handler)
         self.logger.info(msg)
 
 

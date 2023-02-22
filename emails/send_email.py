@@ -1,4 +1,5 @@
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from logs.email_send_logger import EmailSendLogger
 import ssl
 import smtplib
@@ -16,17 +17,26 @@ class EmailManager:
         self.password = password
         self.smtp_host = host
         self.smtp_port = port
+        self.msg = MIMEMultipart()
         self.email_logger = EmailSendLogger('send_email')
 
-    def field_transfer(self, msg, from_email, to_email, subject = None) -> MIMEText:
-        message = MIMEText(msg)
-        message['From'] = from_email
-        message['To'] = to_email
-        message['Subject'] = subject
+    def attachment_text(self, msg, from_email, to_email, subject = None, subtype="plain") -> None:
+        self.msg['From'] = from_email
+        self.msg['To'] = to_email
+        self.msg['Subject'] = subject
+        self.msg.attach(MIMEText(msg, subtype))
 
-        return message
+    def attachment_file(self, file_path, file_name):
+        with open(file_path, 'r') as f:
+            attachment_file = MIMEText(f.read(), 'plain')
+            attachment_file.add_header(
+                'Content-Disposition',
+                'attachment',
+                filename=file_name
+            )
+            self.msg.attach(attachment_file)
 
-    def send_email(self, mime_text: MIMEText) -> None:
+    def send_email(self) -> None:
         context = ssl.create_default_context()
 
         try:
@@ -35,11 +45,12 @@ class EmailManager:
                 smtp.starttls(context=context)
                 smtp.ehlo()
                 smtp.login(self.username, self.password)
-                smtp.send_message(mime_text)
-                self.email_logger.info_message('メールを送信しました。宛先: {}'.format(mime_text['To']))
+                print(type(self.msg))
+                smtp.send_message(self.msg)
+                self.email_logger.info_message('メールを送信しました。宛先: {}'.format(self.msg['To']))
 
-        except:
-            raise EmailSendError('メールの送信に失敗')
+        except Exception as error:
+            raise EmailSendError('メールの送信に失敗', error)
 
         finally:
             self.email_logger.info_message('処理が完了しました')
