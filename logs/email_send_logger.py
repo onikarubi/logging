@@ -12,12 +12,23 @@ class EmailSendLogger:
         self.logger = logging.getLogger(__name__)
 
 
-    def info_message(self, msg: str):
+    def info_message(self, msg: any) -> None:
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(self.file_handler)
         self.logger.addHandler(self.console_handler)
         self.logger.info(msg)
 
+    def output_debug(self, dbg_msg: any) -> None:
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(self.file_handler)
+        self.logger.addHandler(self.console_handler)
+        self.logger.debug(dbg_msg)
+
+    def error_output(self, msg):
+        self.logger.setLevel(logging.ERROR)
+        self.logger.addHandler(self.file_handler)
+        self.logger.addHandler(self.console_handler)
+        self.logger.error(msg)
 
 
 
