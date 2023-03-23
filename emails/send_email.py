@@ -14,7 +14,7 @@ class SendEmailException(Exception):
 
 class EmailSender:
 
-    def __init__(self, username, password, host=None, port=None, smtp=None) -> None:
+    def __init__(self, username, password, host=None, port=None, is_attachment_file: bool = False, smtp=None) -> None:
         self._username = username
         self._password = password
         self.encrypt_password = PasswordEncryption(self.password)
@@ -22,6 +22,7 @@ class EmailSender:
         self._smtp_port = port
         self.multipart = MIMEMultipart()
         self.email_logger = EmailSendLogger('send_email')
+        self._is_attachment_file = is_attachment_file
         self._smtp = smtp
         self._application_user = {
             "application_username": self.username, "application_password": self.encrypt_password.hash_password()}
@@ -38,6 +39,12 @@ class EmailSender:
     def application_user(self): return self._application_user
     @property
     def smtp(self) -> SMTP: return self._smtp
+    @property
+    def is_attachment_file(self) -> bool: return self._is_attachment_file
+
+    @is_attachment_file.setter
+    def change_attachment_file_flag(self, flag: bool = None):
+        self._is_attachment_file = flag
 
     @smtp_host.setter
     def smtp_host(self, host_name: str) -> str:
@@ -77,6 +84,9 @@ class EmailSender:
     - 設定した添付ファイルの内容をmultipartに紐付ける
     """
     def attachment_file(self, file_path, file_name):
+        if not self._is_attachment_file:
+            return
+
         with open(file_path, 'r') as f:
             attachment_file = MIMEText(f.read(), 'plain')
             attachment_file.add_header(
@@ -99,6 +109,7 @@ class EmailSender:
             self.smtp.ehlo()
             self.smtp.starttls(context=context)
             self.smtp.login(self.username, self.password)
+            self.email_logger.info_message('認証しました。')
             self.email_logger.info_message(f'認証情報: {self.application_user}')
 
         except:

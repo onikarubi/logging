@@ -51,6 +51,7 @@ class EmailApplication:
             msg_body=input_msg_body, from_email=input_from, to_email=input_to, subject=input_subject)
 
         if attachment_files:
+            email_sender.change_attachment_file_flag = True
             file_path = input('ファイルのパス >> ')
             file_name = input('ファイル名 >> ')
 
